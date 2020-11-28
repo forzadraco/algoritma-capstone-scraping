@@ -12,35 +12,47 @@ matplotlib.use('Agg')
 app = Flask(__name__) #do not change this
 
 #insert the scrapping here
-url_get = requests.get('____')
+link = 'https://www.exchange-rates.org/history/IDR/USD/T'
+url_get = requests.get(link)
 soup = BeautifulSoup(url_get.content,"html.parser")
 
-____ = soup.find('___')
-___ = tbody.find_all('___')
+table = soup.find('div',attrs={'id':'ctl00_M_pnlText'})
+tr = table.find_all('tr')
 temp = [] #initiating a tuple
 
 for i in range(1, len(tr)):
 #insert the scrapping process here
-    
-    temp.append((____,____)) 
+	row = table.find_all('tr')[i]
+
+    #get tanggal
+	tanggal = row.find_all('td')[0].text
+	tanggal = tanggal.strip() #for removing the excess whitespace
+
+	#get harga harian
+	harga_harian = row.find_all('a')[0].text
+	harga_harian = harga_harian.strip()
+	temp.append( (tanggal, harga_harian) )
 
 temp = temp[::-1]
 
 #change into dataframe
-data = pd.DataFrame(____, columns = ('____','_____'))
-
+df = pd.DataFrame(temp, columns = ('tanggal','harga_harian'))
 #insert data wrangling here
 
+df['harga_harian'] = df['harga_harian'].replace('[^\d.]+','',regex=True)
+df['harga_harian'] = df['harga_harian'].astype('float64')
+
+pl=df.set_index('tanggal')
 
 #end of data wranggling 
 
 @app.route("/")
 def index(): 
 	
-	card_data = f'USD {data["____"].mean().round(2)}'
+	card_data = f'USD {round(df["harga_harian"].mean())}'
 
 	# generate plot
-	ax = ______.plot(figsize = (20,9))
+	ax = pl.plot(figsize = (20,9))
 	
 	# Rendering plot
 	# Do not change this
